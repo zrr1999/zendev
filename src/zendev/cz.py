@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 
 from commitizen.cz.base import BaseCommitizen
 from commitizen.cz.utils import multiple_line_breaker, required_validator
@@ -78,7 +78,7 @@ class ZendevCz(BaseCommitizen):
         r"^(?P<change_type>feat|fix|refactor|perf|BREAKING CHANGE)"
         r"(?:\((?P<scope>[^()\r\n]*)\)|\()?(?P<breaking>!)?:\s(?P<message>.*)?"
     )
-    change_type_map = {"feat": "Feat", "fix": "Fix", "refactor": "Refactor", "perf": "Perf"}
+    change_type_map: ClassVar[dict[str, str]] = {"feat": "Feat", "fix": "Fix", "refactor": "Refactor", "perf": "Perf"}
 
     def questions(self) -> list[CzQuestion]:
         choices: list[dict[str, Any]] = []
@@ -86,11 +86,26 @@ class ZendevCz(BaseCommitizen):
             desc = _DESCRIPTIONS.get(type_name, "")
             choices.append({"value": type_name, "name": f"{emoji} {type_name}: {desc}"})
         return [
-            {"type": "list", "name": "prefix", "message": "Select the type of change you are committing", "choices": choices},
+            {
+                "type": "list",
+                "name": "prefix",
+                "message": "Select the type of change you are committing",
+                "choices": choices,
+            },
             {"type": "input", "name": "scope", "message": "Scope (press enter to skip):\n", "filter": _parse_scope},
             {"type": "input", "name": "subject", "message": "Short imperative summary:\n", "filter": _parse_subject},
-            {"type": "input", "name": "body", "message": "Body (press enter to skip):\n", "filter": multiple_line_breaker},
-            {"type": "confirm", "name": "is_breaking_change", "message": "Is this a BREAKING CHANGE?", "default": False},
+            {
+                "type": "input",
+                "name": "body",
+                "message": "Body (press enter to skip):\n",
+                "filter": multiple_line_breaker,
+            },
+            {
+                "type": "confirm",
+                "name": "is_breaking_change",
+                "message": "Is this a BREAKING CHANGE?",
+                "default": False,
+            },
             {"type": "input", "name": "footer", "message": "Footer (press enter to skip):\n"},
         ]
 

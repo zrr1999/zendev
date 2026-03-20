@@ -17,7 +17,7 @@ def setup_log(*, verbose: bool = False, json: bool = False) -> None:
         verbose: If True, set log level to DEBUG. Defaults to False (INFO).
         json: If True, use JSON serialization (CI-friendly). Defaults to False.
     """
-    global _configured  # noqa: PLW0603
+    global _configured
     if _configured:
         return
     _configured = True
@@ -25,10 +25,7 @@ def setup_log(*, verbose: bool = False, json: bool = False) -> None:
     logger.remove()
 
     env_level = os.environ.get("ZENDEV_LOG_LEVEL")
-    if env_level:
-        level = env_level.upper()
-    else:
-        level = "DEBUG" if verbose else "INFO"
+    level = env_level.upper() if env_level else ("DEBUG" if verbose else "INFO")
 
     if json:
         logger.add(sys.stderr, level=level, serialize=True)

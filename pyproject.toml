@@ -1,6 +1,6 @@
 [project]
 name = "zendev"
-version = "0.1.0"
+version = "0.0.1"
 description = "Personal dev workflow toolkit: unified logging + emoji commit conventions"
 readme = "README.md"
 requires-python = ">=3.12"

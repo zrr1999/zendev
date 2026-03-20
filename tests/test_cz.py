@@ -10,11 +10,41 @@ from commitizen.config.base_config import BaseConfig
 from zendev.cz import EMOJI_MAP, ZendevCz
 
 
+def _answers(
+    prefix: str = "feat",
+    scope: str = "",
+    subject: str = "test",
+    body: str = "",
+    footer: str = "",
+    is_breaking_change: bool = False,
+) -> dict:
+    return {
+        "prefix": prefix,
+        "scope": scope,
+        "subject": subject,
+        "body": body,
+        "footer": footer,
+        "is_breaking_change": is_breaking_change,
+    }
+
+
 class TestEmojiMap:
     """Tests for emoji mapping."""
 
     def test_all_types_have_emoji(self) -> None:
-        expected_types = {"init", "feat", "fix", "docs", "refactor", "test", "ci", "perf", "chore", "style", "build"}
+        expected_types = {
+            "init",
+            "feat",
+            "fix",
+            "docs",
+            "refactor",
+            "test",
+            "ci",
+            "perf",
+            "chore",
+            "style",
+            "build",
+        }
         assert set(EMOJI_MAP.keys()) == expected_types
 
     def test_emoji_values_are_nonempty(self) -> None:
@@ -37,24 +67,20 @@ class TestZendevCz:
         assert qs[0]["name"] == "prefix"
 
     def test_message_format(self, cz: ZendevCz) -> None:
-        answers = {"prefix": "feat", "scope": "", "subject": "add dark mode", "body": "", "footer": "", "is_breaking_change": False}
-        msg = cz.message(answers)
+        msg = cz.message(_answers(prefix="feat", subject="add dark mode"))
         assert msg == "✨ feat: add dark mode"
 
     def test_message_with_scope(self, cz: ZendevCz) -> None:
-        answers = {"prefix": "fix", "scope": "parser", "subject": "null pointer", "body": "", "footer": "", "is_breaking_change": False}
-        msg = cz.message(answers)
+        msg = cz.message(_answers(prefix="fix", scope="parser", subject="null pointer"))
         assert msg == "🐛 fix(parser): null pointer"
 
     def test_message_with_body(self, cz: ZendevCz) -> None:
-        answers = {"prefix": "feat", "scope": "", "subject": "add export", "body": "supports CSV and JSON", "footer": "", "is_breaking_change": False}
-        msg = cz.message(answers)
+        msg = cz.message(_answers(prefix="feat", subject="add export", body="supports CSV and JSON"))
         assert "✨ feat: add export" in msg
         assert "supports CSV and JSON" in msg
 
     def test_message_breaking_change(self, cz: ZendevCz) -> None:
-        answers = {"prefix": "feat", "scope": "", "subject": "new API", "body": "", "footer": "migration guide", "is_breaking_change": True}
-        msg = cz.message(answers)
+        msg = cz.message(_answers(subject="new API", footer="migration guide", is_breaking_change=True))
         assert "BREAKING CHANGE" in msg
 
     def test_schema_pattern_matches_valid(self, cz: ZendevCz) -> None:

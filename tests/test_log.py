@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import zendev.log as log_mod
 from loguru import logger
 
+import zendev.log as log_mod
 from zendev.log import setup_log
 
 
