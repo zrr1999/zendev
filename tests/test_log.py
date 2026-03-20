@@ -33,7 +33,7 @@ class TestSetupLog:
     def test_json_mode(self) -> None:
         setup_log(json=True)
         handler = next(iter(logger._core.handlers.values()))
-        assert handler.serialize is True
+        assert handler._serialize is True
 
     def test_env_override(self, monkeypatch: object) -> None:
         monkeypatch.setenv("ZENDEV_LOG_LEVEL", "WARNING")  # type: ignore[attr-defined]

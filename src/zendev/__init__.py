@@ -2,4 +2,6 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from zendev.log import setup_log
+
+__all__ = ["setup_log"]
