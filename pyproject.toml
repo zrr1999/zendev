@@ -30,7 +30,30 @@ check = [
 ]
 test = [
   "pytest>=8.0",
+  "pytest-cov>=5.0",
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["zendev"]
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "@abstractmethod",
+  "\\.\\.\\.",
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"
 
 [tool.pyright]
 typeCheckingMode = "standard"
@@ -42,10 +65,35 @@ src = ["src", "tests"]
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "UP", "B", "SIM", "C4", "FA", "RUF"]
+select = [
+  "E",    # pycodestyle errors
+  "W",    # pycodestyle warnings
+  "F",    # pyflakes
+  "I",    # isort
+  "UP",   # pyupgrade
+  "B",    # flake8-bugbear
+  "SIM",  # flake8-simplify
+  "C4",   # flake8-comprehensions
+  "FA",   # flake8-future-annotations
+  "RUF",  # ruff-specific rules
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["zendev"]
 
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "I002"]
+"tests/**" = ["D"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = ["--strict-markers", "--tb=short"]
+
+[tool.uv]
+default-groups = ["check", "test"]

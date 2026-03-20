@@ -1,9 +1,28 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.egg-info/
 dist/
 build/
+
+# Virtual environments
 .venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Coverage
+htmlcov/
+coverage.xml
+.coverage
+
+# Testing
 .pytest_cache/
-*.egg
 .ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db
