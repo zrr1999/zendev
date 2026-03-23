@@ -19,8 +19,9 @@ format:
 
 # Type checking and linting
 check:
+    uvx ruff check --fix
+    uvx ty check .
     uv run pyright
-    uvx ruff check .
 
 # Run all tests
 test:

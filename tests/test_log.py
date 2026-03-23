@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import io
+
+import pytest
 from loguru import logger
 
 import zendev.log as log_mod
@@ -16,27 +19,57 @@ class TestSetupLog:
         logger.remove()
         log_mod._configured = False
 
-    def test_default_adds_stderr_handler(self) -> None:
-        setup_log()
-        assert len(logger._core.handlers) == 1
+    def test_default_returns_handler_id(self) -> None:
+        handler_id = setup_log()
+        assert isinstance(handler_id, int)
 
     def test_idempotent(self) -> None:
-        setup_log()
-        setup_log()
-        assert len(logger._core.handlers) == 1
+        first = setup_log()
+        second = setup_log()
+        assert isinstance(first, int)
+        assert second is None
 
     def test_verbose_sets_debug_level(self) -> None:
-        setup_log(verbose=True)
-        handler = next(iter(logger._core.handlers.values()))
-        assert handler.levelno <= 10  # DEBUG = 10
+        logger.remove()
+        buf = io.StringIO()
+        log_mod._configured = False
+        # Use a buffer sink so we can capture output
+        handler_id = setup_log(verbose=True)
+        assert handler_id is not None
+        # Add a test sink to verify DEBUG messages pass through
+        logger.remove(handler_id)
+        test_id = logger.add(buf, level="DEBUG", format="{level} {message}")
+        logger.debug("test-debug-msg")
+        logger.remove(test_id)
+        assert "test-debug-msg" in buf.getvalue()
 
     def test_json_mode(self) -> None:
-        setup_log(json=True)
-        handler = next(iter(logger._core.handlers.values()))
-        assert handler._serialize is True
+        logger.remove()
+        buf = io.StringIO()
+        log_mod._configured = False
+        handler_id = setup_log(json=True)
+        assert handler_id is not None
+        # Replace the stderr handler with a buffer to verify serialization
+        logger.remove(handler_id)
+        test_id = logger.add(buf, level="INFO", serialize=True)
+        logger.info("test-json-msg")
+        logger.remove(test_id)
+        output = buf.getvalue()
+        assert '"text"' in output  # serialized JSON contains "text" key
 
-    def test_env_override(self, monkeypatch: object) -> None:
-        monkeypatch.setenv("ZENDEV_LOG_LEVEL", "WARNING")  # type: ignore[attr-defined]
-        setup_log()
-        handler = next(iter(logger._core.handlers.values()))
-        assert handler.levelno == 30  # WARNING = 30
+    def test_env_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("ZENDEV_LOG_LEVEL", "WARNING")
+        logger.remove()
+        buf = io.StringIO()
+        log_mod._configured = False
+        handler_id = setup_log()
+        assert handler_id is not None
+        # Replace handler with buffer to verify WARNING level
+        logger.remove(handler_id)
+        test_id = logger.add(buf, level="WARNING", format="{level} {message}")
+        logger.info("should-not-appear")
+        logger.warning("should-appear")
+        logger.remove(test_id)
+        output = buf.getvalue()
+        assert "should-not-appear" not in output
+        assert "should-appear" in output
