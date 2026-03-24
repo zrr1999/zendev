@@ -2,14 +2,29 @@
 
 from __future__ import annotations
 
+import argparse
+import re
 import subprocess
 import sys
 from collections import OrderedDict
+from collections.abc import Sequence
+from pathlib import Path
 from typing import TypedDict
 
 import questionary
 
-__all__ = ["EMOJI_MAP", "ZendevAnswers", "ask", "main", "message", "schema_pattern"]
+__all__ = [
+    "EMOJI_MAP",
+    "ZendevAnswers",
+    "ask",
+    "commit_msg_hook",
+    "hook_main",
+    "is_valid_commit_message",
+    "main",
+    "message",
+    "schema_pattern",
+    "suggest_commit_message",
+]
 
 EMOJI_MAP: dict[str, str] = {
     "init": "\U0001f389",
@@ -50,6 +65,8 @@ BUMP_MAP: OrderedDict[str, str] = OrderedDict(
         (r"^perf", "PATCH"),
     )
 )
+
+SPECIAL_COMMIT_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
 
 
 def _parse_scope(text: str) -> str:
@@ -93,18 +110,75 @@ def message(answers: ZendevAnswers) -> str:
     return f"{title}: {subject}{formatted_body}{formatted_footer}"
 
 
-def schema_pattern() -> str:
+def schema_pattern(*, require_emoji: bool = True) -> str:
     types = "|".join(EMOJI_MAP.keys())
     return (
         r"(?s)"
-        r"(\S+ )?"  # optional emoji
-        r"(" + types + r")"
-        r"(\(\S+\))?"  # optional scope
-        r"!?"
-        r": "
-        r"([^\n\r]+)"  # subject
-        r"((\n\n.*)|(\s*))?$"
+        + (r"(\S+ )" if require_emoji else r"(\S+ )?")
+        + r"("
+        + types
+        + r")"
+        + r"(\(\S+\))?"  # optional scope
+        + r"!?"
+        + r": "
+        + r"([^\n\r]+)"  # subject
+        + r"((\n\n.*)|(\s*))?$"
     )
+
+
+def normalize_commit_message(text: str) -> str:
+    lines = [line.rstrip() for line in text.splitlines() if not line.startswith("#")]
+    return "\n".join(lines).strip()
+
+
+def is_valid_commit_message(text: str) -> bool:
+    normalized = normalize_commit_message(text)
+    if not normalized:
+        return False
+    if normalized.startswith(SPECIAL_COMMIT_PREFIXES):
+        return True
+    return re.fullmatch(schema_pattern(), normalized) is not None
+
+
+def suggest_commit_message(text: str) -> str | None:
+    normalized = normalize_commit_message(text)
+    if not normalized or is_valid_commit_message(normalized):
+        return None
+    if re.fullmatch(schema_pattern(require_emoji=False), normalized) is None:
+        return None
+    first_token = normalized.split(":", 1)[0]
+    commit_type = first_token.split("(", 1)[0].rstrip("!")
+    emoji = EMOJI_MAP.get(commit_type)
+    if emoji is None:
+        return None
+    return f"{emoji} {normalized}"
+
+
+def commit_msg_hook(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="zendev-commit-msg",
+        description="Validate commit messages against zendev emoji commit conventions.",
+    )
+    parser.add_argument("commit_msg_file", help="Path to the commit message file provided by git/pre-commit.")
+    args = parser.parse_args(argv)
+
+    message_text = Path(args.commit_msg_file).read_text(encoding="utf-8")
+    normalized = normalize_commit_message(message_text)
+    if is_valid_commit_message(normalized):
+        return 0
+
+    suggestion = suggest_commit_message(normalized)
+    print("Invalid commit message.", file=sys.stderr)
+    print("An emoji prefix is required.", file=sys.stderr)
+    print("Expected format: `<emoji> type(scope): subject`.", file=sys.stderr)
+    if suggestion:
+        print(f"Maybe you meant: `{suggestion.splitlines()[0]}`.", file=sys.stderr)
+    else:
+        print("Example: `✨ feat: generalize upgrade`.", file=sys.stderr)
+    print(f"Allowed types: {', '.join(EMOJI_MAP)}.", file=sys.stderr)
+    if normalized:
+        print(f"Received: {normalized.splitlines()[0]}", file=sys.stderr)
+    return 1
 
 
 def ask() -> ZendevAnswers:
@@ -161,3 +235,8 @@ def main() -> None:
     msg = message(answers)
     result = subprocess.run(["git", "commit", "-m", msg], check=False)
     sys.exit(result.returncode)
+
+
+def hook_main() -> None:
+    """Entry point for the reusable commit-msg hook."""
+    sys.exit(commit_msg_hook())

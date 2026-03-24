@@ -55,6 +55,10 @@ ci: format check cov
 pre-commit:
     uvx prek run --all-files
 
+# Validate the current commit message file
+commit-msg:
+    uvx prek run --stage commit-msg --commit-msg-filename .git/COMMIT_EDITMSG --files .git/COMMIT_EDITMSG
+
 # Display project information
 info:
     @echo "=== zendev ==="

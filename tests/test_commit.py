@@ -3,8 +3,17 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
-from zendev.commit import EMOJI_MAP, ZendevAnswers, message, schema_pattern
+from zendev.commit import (
+    EMOJI_MAP,
+    ZendevAnswers,
+    commit_msg_hook,
+    is_valid_commit_message,
+    message,
+    schema_pattern,
+    suggest_commit_message,
+)
 
 
 def _answers(
@@ -96,3 +105,64 @@ class TestSchemaPattern:
         ]
         for msg in invalid_messages:
             assert not pattern.match(msg), f"Pattern should reject: {msg}"
+
+
+class TestCommitMessageValidation:
+    """Tests for reusable commit-msg validation."""
+
+    def test_commit_message_without_emoji_is_rejected(self) -> None:
+        assert not is_valid_commit_message("feat(parser): add streaming mode")
+
+    def test_valid_commit_message_with_comments(self) -> None:
+        commit_message = "✨ feat: add export\n\nbody line\n# Please enter the commit message"
+        assert is_valid_commit_message(commit_message)
+
+    def test_special_commit_messages_are_allowed(self) -> None:
+        special_messages = [
+            'Merge branch "main" into feature/test',
+            'Revert "✨ feat: add export"',
+            "fixup! ✨ feat: add export",
+            "squash! 🐛 fix: repair parser",
+        ]
+        for commit_message in special_messages:
+            assert is_valid_commit_message(commit_message), f"Expected special message to pass: {commit_message}"
+
+    def test_invalid_commit_message_rejected(self) -> None:
+        assert not is_valid_commit_message("ship it")
+
+    def test_type_only_commit_message_rejected(self) -> None:
+        assert not is_valid_commit_message("feat: add export")
+
+    def test_suggest_commit_message_adds_missing_emoji(self) -> None:
+        assert suggest_commit_message("feat(parser): add export") == "✨ feat(parser): add export"
+
+    def test_suggest_commit_message_ignores_unstructured_text(self) -> None:
+        assert suggest_commit_message("ship it") is None
+
+
+class TestCommitMsgHook:
+    """Tests for commit-msg hook CLI behavior."""
+
+    def test_commit_msg_hook_accepts_valid_message(self, tmp_path: Path) -> None:
+        commit_file = tmp_path / "COMMIT_EDITMSG"
+        commit_file.write_text("✨ feat: add export", encoding="utf-8")
+
+        assert commit_msg_hook([str(commit_file)]) == 0
+
+    def test_commit_msg_hook_rejects_invalid_message(self, tmp_path: Path, capsys) -> None:
+        commit_file = tmp_path / "COMMIT_EDITMSG"
+        commit_file.write_text("ship it", encoding="utf-8")
+
+        assert commit_msg_hook([str(commit_file)]) == 1
+        captured = capsys.readouterr()
+        assert "Invalid commit message." in captured.err
+        assert "Allowed types:" in captured.err
+
+    def test_commit_msg_hook_rejects_missing_emoji(self, tmp_path: Path, capsys) -> None:
+        commit_file = tmp_path / "COMMIT_EDITMSG"
+        commit_file.write_text("feat: add export", encoding="utf-8")
+
+        assert commit_msg_hook([str(commit_file)]) == 1
+        captured = capsys.readouterr()
+        assert "An emoji prefix is required." in captured.err
+        assert "Maybe you meant: `✨ feat: add export`." in captured.err

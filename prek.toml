@@ -1,6 +1,5 @@
 [[repos]]
-repo = "https://github.com/pre-commit/pre-commit-hooks"
-rev = "v6.0.0"
+repo = "builtin"
 hooks = [
   { id = "check-added-large-files" },
   { id = "check-case-conflict" },
@@ -8,7 +7,6 @@ hooks = [
   { id = "check-yaml" },
   { id = "check-json" },
   { id = "check-merge-conflict" },
-  { id = "destroyed-symlinks" },
   { id = "end-of-file-fixer" },
   { id = "mixed-line-ending" },
   { id = "trailing-whitespace" },
@@ -27,4 +25,10 @@ repo = "https://github.com/crate-ci/typos"
 rev = "v1.31.1"
 hooks = [
   { id = "typos", args = ["--force-exclude"] },
+]
+
+[[repos]]
+repo = "local"
+hooks = [
+  { id = "zendev-commit-msg", name = "zendev commit message", entry = "uv run zendev-commit-msg", language = "system", stages = ["commit-msg"] },
 ]

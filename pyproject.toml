@@ -12,6 +12,7 @@ dynamic = ["version"]
 
 [project.scripts]
 zendev-commit = "zendev.commit:main"
+zendev-commit-msg = "zendev.commit:hook_main"
 
 [dependency-groups]
 dev = [
