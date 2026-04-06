@@ -52,15 +52,15 @@ This repository publishes a composite action that runs the same validation as `z
 Pin a release tag (or commit SHA) and pass the PR title:
 
 ```yaml
-# .github/workflows/ci-pr-title.yml
-name: CI - Check PR Title
+# .github/workflows/ci-pr-checks.yml
+name: CI - PR Checks
 
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
 
 jobs:
-  check-pr-title:
+  title:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read

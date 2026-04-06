@@ -1,4 +1,4 @@
-name: Validate zendev title
+name: Check PR title
 description: >
   Validate a PR title or one-line subject against zendev emoji commit conventions.
   Uses the same rules as the zendev-commit-msg hook (is_valid_commit_message).
@@ -16,15 +16,24 @@ runs:
       with:
         python-version: "3.12"
 
-    - name: Install zendev from this repository
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
+
+    - name: Install zendev (locked, runtime only)
       shell: bash
       env:
         GITHUB_ACTION_PATH: ${{ github.action_path }}
-      run: pip install "${GITHUB_ACTION_PATH}/../../.."
+      run: |
+        ROOT="$(cd "${GITHUB_ACTION_PATH}/../../.." && pwd)"
+        cd "$ROOT"
+        uv sync --frozen --no-default-groups
 
     - name: Validate
       shell: bash
       env:
         INPUT_TEXT: ${{ inputs.text }}
         GITHUB_ACTION_PATH: ${{ github.action_path }}
-      run: python "${GITHUB_ACTION_PATH}/validate.py"
+      run: |
+        ROOT="$(cd "${GITHUB_ACTION_PATH}/../../.." && pwd)"
+        cd "$ROOT"
+        uv run python "${GITHUB_ACTION_PATH}/validate.py"
