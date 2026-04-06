@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import re
 from pathlib import Path
 
@@ -9,8 +10,10 @@ from zendev.commit import (
     EMOJI_MAP,
     ZendevAnswers,
     commit_msg_hook,
+    format_commit_convention_help_body,
     is_valid_commit_message,
     message,
+    report_invalid_commit_message,
     schema_pattern,
     suggest_commit_message,
 )
@@ -140,6 +143,25 @@ class TestCommitMessageValidation:
         assert suggest_commit_message("ship it") is None
 
 
+class TestSharedCommitHelp:
+    """Shared helpers for hook and CI."""
+
+    def test_format_commit_convention_help_body_covers_all_types(self) -> None:
+        body = format_commit_convention_help_body()
+        assert "Type table:" in body
+        assert "Merge, Revert, fixup!" in body
+        for name, emoji in EMOJI_MAP.items():
+            assert emoji in body
+            assert name in body
+
+    def test_report_invalid_commit_message_ci_includes_error_annotation(self) -> None:
+        buf = io.StringIO()
+        report_invalid_commit_message("ship it", context="ci", file=buf)
+        out = buf.getvalue()
+        assert "::error::" in out
+        assert "Received: 'ship it'" in out
+
+
 class TestCommitMsgHook:
     """Tests for commit-msg hook CLI behavior."""
 
@@ -156,7 +178,7 @@ class TestCommitMsgHook:
         assert commit_msg_hook([str(commit_file)]) == 1
         captured = capsys.readouterr()
         assert "Invalid commit message." in captured.err
-        assert "Allowed types:" in captured.err
+        assert "Type table:" in captured.err
 
     def test_commit_msg_hook_rejects_missing_emoji(self, tmp_path: Path, capsys) -> None:
         commit_file = tmp_path / "COMMIT_EDITMSG"
