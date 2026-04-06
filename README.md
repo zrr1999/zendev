@@ -45,6 +45,33 @@ Then install the hook:
 uvx prek install --hook-type commit-msg
 ```
 
+### GitHub Actions: validate PR titles
+
+This repository publishes a composite action that runs the same validation as `zendev-commit-msg` (`is_valid_commit_message`).
+
+Pin a release tag (or commit SHA) and pass the PR title:
+
+```yaml
+# .github/workflows/ci-pr-title.yml
+name: CI - Check PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-pr-title:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: zrr1999/zendev/.github/actions/validate-title@v0.0.5
+        with:
+          text: ${{ github.event.pull_request.title }}
+```
+
+Pin a semver tag that includes this action (for example `v0.0.5` after it is released). For stability, avoid floating refs in production workflows.
+
 ### Use inside this repository
 
 ```bash

@@ -11,41 +11,9 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - name: Check PR title
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          echo "::group::PR Title Check"
-          echo "PR title: $PR_TITLE"
-          echo "::endgroup::"
+      - uses: actions/checkout@v4
 
-          # Format: <emoji> <type>(<scope>): <description>
-          if echo "$PR_TITLE" | grep -Pq '^(✨ feat|🐛 fix|♻️ refactor|⚡ perf|📝 docs|✅ test|📦 build|👷 ci|🔧 chore|🎉 init|🎨 style)(\([a-z-]+\))?: .+'; then
-            echo "✅ PR title format is valid."
-            exit 0
-          fi
-
-          echo ""
-          echo "❌ PR title does not match the required format."
-          echo ""
-          echo "  Expected: <emoji> <type>(<scope>): <description>"
-          echo ""
-          echo "  Type table:"
-          echo "    🎉 init      Project initialization"
-          echo "    ✨ feat      New feature"
-          echo "    🐛 fix       Bug fix"
-          echo "    ♻️ refactor  Refactoring"
-          echo "    ⚡ perf      Performance"
-          echo "    📝 docs      Documentation"
-          echo "    ✅ test      Tests"
-          echo "    📦 build     Build / dependencies"
-          echo "    👷 ci        CI configuration"
-          echo "    🔧 chore     Miscellaneous"
-          echo "    🎨 style     Code style"
-          echo ""
-          echo "  Examples:"
-          echo "    ✨ feat: add JSON logging mode"
-          echo "    🐛 fix(cz): emoji mapping for refactor type"
-          echo "    📦 build: add pytest-cov dependency"
-          echo ""
-          exit 1
+      - name: Validate PR title
+        uses: ./.github/actions/validate-title
+        with:
+          text: ${{ github.event.pull_request.title }}

@@ -1,0 +1,30 @@
+name: Validate zendev title
+description: >
+  Validate a PR title or one-line subject against zendev emoji commit conventions.
+  Uses the same rules as the zendev-commit-msg hook (is_valid_commit_message).
+
+inputs:
+  text:
+    description: Text to validate (for example github.event.pull_request.title).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install zendev from this repository
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+      run: pip install "${GITHUB_ACTION_PATH}/../../.."
+
+    - name: Validate
+      shell: bash
+      env:
+        INPUT_TEXT: ${{ inputs.text }}
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+      run: python "${GITHUB_ACTION_PATH}/validate.py"
