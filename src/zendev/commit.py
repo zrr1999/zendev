@@ -9,19 +9,24 @@ import sys
 from collections import OrderedDict
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TypedDict
+from typing import Literal, TextIO, TypedDict
 
 import questionary
 
 __all__ = [
+    "COMMIT_CONVENTION_EXAMPLES",
     "EMOJI_MAP",
+    "TYPE_DISPLAY_ORDER",
+    "TYPE_SHORT_DESCRIPTIONS",
     "ZendevAnswers",
     "ask",
     "commit_msg_hook",
+    "format_commit_convention_help_body",
     "hook_main",
     "is_valid_commit_message",
     "main",
     "message",
+    "report_invalid_commit_message",
     "schema_pattern",
     "suggest_commit_message",
 ]
@@ -54,6 +59,42 @@ _DESCRIPTIONS: dict[str, str] = {
     "build": "Changes that affect the build system or external dependencies",
 }
 
+# Short labels for CLI / CI help tables (single source with EMOJI_MAP).
+TYPE_SHORT_DESCRIPTIONS: dict[str, str] = {
+    "init": "Project initialization",
+    "feat": "New feature",
+    "fix": "Bug fix",
+    "refactor": "Refactoring",
+    "perf": "Performance",
+    "docs": "Documentation",
+    "test": "Tests",
+    "build": "Build / dependencies",
+    "ci": "CI configuration",
+    "chore": "Miscellaneous",
+    "style": "Code style",
+}
+
+# Stable display order for help output (matches interactive type ordering intent).
+TYPE_DISPLAY_ORDER: tuple[str, ...] = (
+    "init",
+    "feat",
+    "fix",
+    "refactor",
+    "perf",
+    "docs",
+    "test",
+    "build",
+    "ci",
+    "chore",
+    "style",
+)
+
+COMMIT_CONVENTION_EXAMPLES: tuple[str, ...] = (
+    "✨ feat: add JSON logging mode",
+    "🐛 fix(parser): handle null token",
+    "📦 build: add pytest-cov dependency",
+)
+
 BUMP_PATTERN = r"^((BREAKING[\-\ ]CHANGE|\w+)(\(.+\))?!?):"
 BUMP_MAP: OrderedDict[str, str] = OrderedDict(
     (
@@ -67,6 +108,9 @@ BUMP_MAP: OrderedDict[str, str] = OrderedDict(
 )
 
 SPECIAL_COMMIT_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
+
+assert set(TYPE_DISPLAY_ORDER) == set(EMOJI_MAP.keys())
+assert set(TYPE_SHORT_DESCRIPTIONS.keys()) == set(EMOJI_MAP.keys())
 
 
 def _parse_scope(text: str) -> str:
@@ -154,6 +198,61 @@ def suggest_commit_message(text: str) -> str | None:
     return f"{emoji} {normalized}"
 
 
+def _format_type_table_lines() -> list[str]:
+    lines: list[str] = []
+    for name in TYPE_DISPLAY_ORDER:
+        emoji = EMOJI_MAP[name]
+        desc = TYPE_SHORT_DESCRIPTIONS[name]
+        lines.append(f"    {emoji} {name:8} {desc}")
+    return lines
+
+
+def format_commit_convention_help_body(*, include_special_prefix_note: bool = True) -> str:
+    parts: list[str] = [
+        "",
+        "  Expected: <emoji> <type>(<scope>): <description>",
+        "",
+        "  Type table:",
+        *_format_type_table_lines(),
+        "",
+    ]
+    if include_special_prefix_note:
+        parts.append("  Merge, Revert, fixup!, and squash! prefixes are allowed (git-generated).")
+        parts.append("")
+    parts.extend(
+        [
+            "  Examples:",
+            *(f"    {ex}" for ex in COMMIT_CONVENTION_EXAMPLES),
+        ]
+    )
+    return "\n".join(parts)
+
+
+def report_invalid_commit_message(
+    normalized: str,
+    *,
+    context: Literal["hook", "ci"],
+    file: TextIO,
+) -> None:
+    """Print a unified error for invalid messages (commit-msg hook or CI title check)."""
+    suggestion = suggest_commit_message(normalized)
+    if context == "hook":
+        print("Invalid commit message.", file=file)
+        print("An emoji prefix is required.", file=file)
+    else:
+        print("::error::Title does not match zendev emoji commit conventions.", file=file)
+
+    print(format_commit_convention_help_body(), file=file)
+
+    if suggestion:
+        print(f"Maybe you meant: `{suggestion.splitlines()[0]}`.", file=file)
+    elif context == "hook":
+        print("Example: `✨ feat: generalize upgrade`.", file=file)
+
+    received_line = normalized.splitlines()[0] if normalized else ""
+    print(f"Received: {received_line!r}", file=file)
+
+
 def commit_msg_hook(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="zendev-commit-msg",
@@ -167,17 +266,7 @@ def commit_msg_hook(argv: Sequence[str] | None = None) -> int:
     if is_valid_commit_message(normalized):
         return 0
 
-    suggestion = suggest_commit_message(normalized)
-    print("Invalid commit message.", file=sys.stderr)
-    print("An emoji prefix is required.", file=sys.stderr)
-    print("Expected format: `<emoji> type(scope): subject`.", file=sys.stderr)
-    if suggestion:
-        print(f"Maybe you meant: `{suggestion.splitlines()[0]}`.", file=sys.stderr)
-    else:
-        print("Example: `✨ feat: generalize upgrade`.", file=sys.stderr)
-    print(f"Allowed types: {', '.join(EMOJI_MAP)}.", file=sys.stderr)
-    if normalized:
-        print(f"Received: {normalized.splitlines()[0]}", file=sys.stderr)
+    report_invalid_commit_message(normalized, context="hook", file=sys.stderr)
     return 1
 
 

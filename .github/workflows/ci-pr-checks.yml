@@ -1,0 +1,20 @@
+# PR checks: extend with more jobs (e.g. label, size) as needed.
+name: CI - PR Checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  title:
+    name: PR title
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check PR title
+        uses: ./.github/actions/validate-title
+        with:
+          text: ${{ github.event.pull_request.title }}
