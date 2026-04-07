@@ -161,7 +161,7 @@ class TestEmojiEnforcement:
     def test_wrong_emoji_for_type_rejected(self) -> None:
         """The emoji must match the type — swapped pairs are invalid."""
         assert not is_valid_commit_message("🐛 feat: wrong emoji")  # 🐛 is fix, not feat
-        assert not is_valid_commit_message("✨ fix: wrong emoji")   # ✨ is feat, not fix
+        assert not is_valid_commit_message("✨ fix: wrong emoji")  # ✨ is feat, not fix
         assert not is_valid_commit_message("🎉 docs: wrong emoji")  # 🎉 is init, not docs
 
     def test_schema_pattern_rejects_unknown_emoji(self) -> None:
