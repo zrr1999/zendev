@@ -12,9 +12,7 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: actions/checkout@v4
-
       - name: Check PR title
-        uses: ./.github/actions/validate-title
+        uses: zrr1999/zendev-actions/validate-title@58f5b4600fba93a57cc340090b42da67d9f4ac70
         with:
           text: ${{ github.event.pull_request.title }}
