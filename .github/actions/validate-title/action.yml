@@ -37,4 +37,4 @@ runs:
       run: |
         ROOT="$(cd "${GITHUB_ACTION_PATH}/../../.." && pwd)"
         cd "$ROOT"
-        PYTHONPATH="$ROOT/src" .venv/bin/python "${GITHUB_ACTION_PATH}/validate.py"
+        .venv/bin/python "${GITHUB_ACTION_PATH}/validate.py"

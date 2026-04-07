@@ -22,7 +22,7 @@ def run_validate_from_source_checkout(tmp_path: Path, title: str) -> subprocess.
 
     env = os.environ.copy()
     env["INPUT_TEXT"] = title
-    env["PYTHONPATH"] = str(checkout / "src")
+    env["GITHUB_ACTION_PATH"] = str(action_dir)
 
     return subprocess.run(
         [sys.executable, str(action_dir / "validate.py")],
