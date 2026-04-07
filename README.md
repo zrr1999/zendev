@@ -47,9 +47,11 @@ uvx prek install --hook-type commit-msg
 
 ### GitHub Actions: validate PR titles
 
-This repository publishes a composite action that runs the same validation as `zendev-commit-msg` (`is_valid_commit_message`).
+PR-title validation now lives in the standalone
+[`zrr1999/zendev-actions`](https://github.com/zrr1999/zendev-actions) repository,
+while this repository provides the underlying `zendev-validate-title` CLI.
 
-Pin a release tag (or commit SHA) and pass the PR title:
+Pin the standalone action and pass the PR title:
 
 ```yaml
 # .github/workflows/ci-pr-checks.yml
@@ -65,12 +67,13 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: zrr1999/zendev/.github/actions/validate-title@v0.0.5
+      - uses: zrr1999/zendev-actions/validate-title@58f5b4600fba93a57cc340090b42da67d9f4ac70
         with:
           text: ${{ github.event.pull_request.title }}
 ```
 
-Pin a semver tag that includes this action (for example `v0.0.5` after it is released). For stability, avoid floating refs in production workflows.
+The action wrapper shells out via `uvx --from git+...` to `zendev-validate-title`.
+For stability, pin a commit SHA (or a future release tag) in production workflows.
 
 ### Use inside this repository
 
