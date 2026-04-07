@@ -156,9 +156,14 @@ def message(answers: ZendevAnswers) -> str:
 
 def schema_pattern(*, require_emoji: bool = True) -> str:
     types = "|".join(EMOJI_MAP.keys())
+    if require_emoji:
+        emojis = "|".join(re.escape(e) for e in EMOJI_MAP.values())
+        emoji_part = r"(" + emojis + r") "
+    else:
+        emoji_part = r"(\S+ )?"
     return (
         r"(?s)"
-        + (r"(\S+ )" if require_emoji else r"(\S+ )?")
+        + emoji_part
         + r"("
         + types
         + r")"
@@ -181,7 +186,13 @@ def is_valid_commit_message(text: str) -> bool:
         return False
     if normalized.startswith(SPECIAL_COMMIT_PREFIXES):
         return True
-    return re.fullmatch(schema_pattern(), normalized) is not None
+    m = re.fullmatch(schema_pattern(), normalized)
+    if m is None:
+        return False
+    # Enforce emoji↔type pairing: the emoji must be the canonical one for the type.
+    emoji_token = m.group(1).rstrip()
+    commit_type = m.group(2)
+    return EMOJI_MAP.get(commit_type) == emoji_token
 
 
 def suggest_commit_message(text: str) -> str | None:
