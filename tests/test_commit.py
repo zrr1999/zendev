@@ -143,6 +143,56 @@ class TestCommitMessageValidation:
         assert suggest_commit_message("ship it") is None
 
 
+class TestEmojiEnforcement:
+    """Tests that emoji prefix is strictly validated — guards against regression."""
+
+    def test_all_canonical_emoji_type_pairs_accepted(self) -> None:
+        """Every type must pass when paired with its canonical emoji."""
+        for commit_type, emoji in EMOJI_MAP.items():
+            msg = f"{emoji} {commit_type}: test subject"
+            assert is_valid_commit_message(msg), f"Canonical pair should pass: {msg}"
+
+    def test_non_emoji_prefix_rejected(self) -> None:
+        """An arbitrary non-emoji token before the type must be rejected."""
+        assert not is_valid_commit_message("X feat: add feature")
+        assert not is_valid_commit_message("abc fix: resolve bug")
+        assert not is_valid_commit_message("123 docs: update readme")
+
+    def test_wrong_emoji_for_type_rejected(self) -> None:
+        """The emoji must match the type — swapped pairs are invalid."""
+        assert not is_valid_commit_message("🐛 feat: wrong emoji")  # 🐛 is fix, not feat
+        assert not is_valid_commit_message("✨ fix: wrong emoji")  # ✨ is feat, not fix
+        assert not is_valid_commit_message("🎉 docs: wrong emoji")  # 🎉 is init, not docs
+
+    def test_schema_pattern_rejects_unknown_emoji(self) -> None:
+        """An emoji not in EMOJI_MAP must not match the strict pattern."""
+        pattern = re.compile(schema_pattern())
+        assert not pattern.match("🚀 feat: unknown emoji")
+        assert not pattern.match("💡 fix: unknown emoji")
+
+    def test_schema_pattern_relaxed_mode_still_accepts_missing_emoji(self) -> None:
+        """require_emoji=False allows omitting the prefix entirely."""
+        pattern = re.compile(schema_pattern(require_emoji=False))
+        assert pattern.match("feat: add feature")
+        assert pattern.match("fix(core): resolve bug")
+
+    def test_suggest_adds_correct_emoji_for_each_type(self) -> None:
+        """suggest_commit_message should propose the canonical emoji for every type."""
+        for commit_type, emoji in EMOJI_MAP.items():
+            bare = f"{commit_type}: test subject"
+            suggestion = suggest_commit_message(bare)
+            assert suggestion is not None, f"Should suggest for: {bare}"
+            assert suggestion.startswith(f"{emoji} {commit_type}:"), (
+                f"Suggestion should start with canonical emoji: got {suggestion!r}"
+            )
+
+    def test_hook_rejects_wrong_emoji(self, tmp_path: Path, capsys) -> None:
+        """commit-msg hook must reject a message with wrong emoji pairing."""
+        commit_file = tmp_path / "COMMIT_EDITMSG"
+        commit_file.write_text("🐛 feat: wrong emoji for feat type", encoding="utf-8")
+        assert commit_msg_hook([str(commit_file)]) == 1
+
+
 class TestSharedCommitHelp:
     """Shared helpers for hook and CI."""
 
