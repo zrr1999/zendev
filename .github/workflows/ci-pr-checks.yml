@@ -26,6 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check PR body
-        uses: zrr1999/zendev-actions/validate-body@9febe158af61dab5ca7662debcf1eb66eb2b5574
+        uses: zrr1999/zendev-actions/validate-body@a94697dbb38b82f40895bd575ea4d15d8779c00a
         with:
           body: ${{ github.event.pull_request.body }}
