@@ -12,7 +12,20 @@ jobs:
     permissions:
       pull-requests: read
     steps:
+      - uses: actions/checkout@v4
       - name: Check PR title
         uses: zrr1999/zendev-actions/validate-title@58f5b4600fba93a57cc340090b42da67d9f4ac70
         with:
           text: ${{ github.event.pull_request.title }}
+
+  body:
+    name: PR body
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PR body
+        uses: zrr1999/zendev-actions/validate-body@a94697dbb38b82f40895bd575ea4d15d8779c00a
+        with:
+          body: ${{ github.event.pull_request.body }}
