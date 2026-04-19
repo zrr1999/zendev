@@ -14,6 +14,7 @@ dynamic = ["version"]
 zendev-commit = "zendev.commit:main"
 zendev-commit-msg = "zendev.commit:hook_main"
 zendev-validate-title = "zendev.title:main"
+zendev-validate-body = "zendev.body:main"
 
 [dependency-groups]
 dev = [
