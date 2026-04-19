@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
 from zendev.body import _extract_h2_headings, validate_body
-
 
 VALID_BODY = """\
 ## Summary
