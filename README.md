@@ -22,7 +22,7 @@ With `.pre-commit-config.yaml`:
 
 ```yaml
 repos:
-  - repo: https://github.com/your-org/zendev
+  - repo: https://github.com/zendev-lab/zendev
     rev: v0.1.0
     hooks:
       - id: zendev-commit-msg
@@ -32,7 +32,7 @@ With `prek.toml`:
 
 ```toml
 [[repos]]
-repo = "https://github.com/your-org/zendev"
+repo = "https://github.com/zendev-lab/zendev"
 rev = "v0.1.0"
 hooks = [
   { id = "zendev-commit-msg" },
@@ -96,7 +96,7 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: zrr1999/zendev/actions/validate-title@<ref>
+      - uses: zendev-lab/zendev/actions/validate-title@<ref>
         with:
           text: ${{ github.event.pull_request.title }}
 ```
@@ -108,17 +108,14 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: zrr1999/zendev/actions/validate-body@<ref>
+      - uses: zendev-lab/zendev/actions/validate-body@<ref>
         with:
           body: ${{ github.event.pull_request.body }}
 ```
 
-By default, each wrapper runs the CLI from the same checked-out or pinned zendev
-revision as the action itself. That keeps the wrapper and Python logic in sync.
-
-Both actions also accept an optional `zendev-ref` input. Leave it unset for the
-same-revision default, or pass a git ref if you intentionally want the wrapper
-to install `zendev` from a different revision during a rollout.
+Each composite action resolves its bundled zendev tree from `GITHUB_ACTION_PATH`
+(one level under `actions/`) and runs the matching CLI revision with `uvx --from`,
+so the wrappers always stay aligned with whatever tag or revision pins the action.
 
 ### Use inside this repository
 

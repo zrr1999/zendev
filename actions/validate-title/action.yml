@@ -5,10 +5,6 @@ inputs:
   text:
     description: Text to validate (for example github.event.pull_request.title).
     required: true
-  zendev-ref:
-    description: Optional git ref used to override the bundled zendev revision.
-    required: false
-    default: ""
 
 runs:
   using: composite
@@ -23,19 +19,9 @@ runs:
       shell: bash
       env:
         INPUT_TEXT: ${{ inputs.text }}
-        INPUT_ZENDEV_REF: ${{ inputs.zendev-ref }}
-        INPUT_ACTION_REF: ${{ github.action_ref }}
-        INPUT_ACTION_REPOSITORY: ${{ github.action_repository }}
       run: |
         set -euo pipefail
 
-        if [[ -n "${INPUT_ZENDEV_REF}" ]]; then
-          zendev_source="git+https://github.com/zrr1999/zendev.git@${INPUT_ZENDEV_REF}"
-        elif [[ -n "${INPUT_ACTION_REF}" && -n "${INPUT_ACTION_REPOSITORY}" ]]; then
-          zendev_source="git+https://github.com/${INPUT_ACTION_REPOSITORY}.git@${INPUT_ACTION_REF}"
-        else
-          zendev_source="$(cd "${GITHUB_ACTION_PATH}/../.." && pwd)"
-        fi
-
-        echo "Using zendev source: ${zendev_source}"
-        uvx --from "${zendev_source}" zendev-validate-title "${INPUT_TEXT}"
+        zendev_root="$(cd "${GITHUB_ACTION_PATH}/../.." && pwd)"
+        echo "Using zendev from ${zendev_root}"
+        uvx --from "${zendev_root}" zendev-validate-title "${INPUT_TEXT}"
