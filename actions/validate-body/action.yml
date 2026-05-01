@@ -9,10 +9,6 @@ inputs:
     description: Path to the PR template file relative to the repo root.
     required: false
     default: ".github/pull_request_template.md"
-  zendev-ref:
-    description: Optional git ref used to override the bundled zendev revision.
-    required: false
-    default: ""
 
 runs:
   using: composite
@@ -28,20 +24,10 @@ runs:
       env:
         INPUT_BODY: ${{ inputs.body }}
         INPUT_TEMPLATE: ${{ inputs.template }}
-        INPUT_ZENDEV_REF: ${{ inputs.zendev-ref }}
-        INPUT_ACTION_REF: ${{ github.action_ref }}
-        INPUT_ACTION_REPOSITORY: ${{ github.action_repository }}
       run: |
         set -euo pipefail
 
-        if [[ -n "${INPUT_ZENDEV_REF}" ]]; then
-          zendev_source="git+https://github.com/zendev-lab/zendev.git@${INPUT_ZENDEV_REF}"
-        elif [[ -n "${INPUT_ACTION_REF}" && -n "${INPUT_ACTION_REPOSITORY}" ]]; then
-          zendev_source="git+https://github.com/${INPUT_ACTION_REPOSITORY}.git@${INPUT_ACTION_REF}"
-        else
-          zendev_source="$(cd "${GITHUB_ACTION_PATH}/../.." && pwd)"
-        fi
-
-        echo "Using zendev source: ${zendev_source}"
-        uvx --from "${zendev_source}" \
+        zendev_root="$(cd "${GITHUB_ACTION_PATH}/../.." && pwd)"
+        echo "Using zendev from ${zendev_root}"
+        uvx --from "${zendev_root}" \
           zendev-validate-body "${INPUT_BODY}" --template "${INPUT_TEMPLATE}"
