@@ -45,13 +45,15 @@ Then install the hook:
 uvx prek install --hook-type commit-msg
 ```
 
-### GitHub Actions: validate PR titles
+### GitHub Actions: validate PR titles and bodies
 
-PR-title validation now lives in the standalone
-[`zrr1999/zendev-actions`](https://github.com/zrr1999/zendev-actions) repository,
-while this repository provides the underlying `zendev-validate-title` CLI.
+This repository now ships both the Python CLIs and the thin composite-action
+wrappers under [`actions/`](./actions), so one zendev revision owns the full PR
+validation stack.
 
-Pin the standalone action and pass the PR title:
+#### Use inside this repository
+
+Check out the repo, then call the local actions:
 
 ```yaml
 # .github/workflows/ci-pr-checks.yml
@@ -67,13 +69,56 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: zrr1999/zendev-actions/validate-title@58f5b4600fba93a57cc340090b42da67d9f4ac70
+      - uses: actions/checkout@v4
+      - uses: ./actions/validate-title
+        with:
+          text: ${{ github.event.pull_request.title }}
+
+  body:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/validate-body
+        with:
+          body: ${{ github.event.pull_request.body }}
+```
+
+#### Use from another repository
+
+Pin the action path in this repository:
+
+```yaml
+jobs:
+  title:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: zrr1999/zendev/actions/validate-title@<ref>
         with:
           text: ${{ github.event.pull_request.title }}
 ```
 
-The action wrapper shells out via `uvx --from git+...` to `zendev-validate-title`.
-For stability, pin a commit SHA (or a future release tag) in production workflows.
+```yaml
+jobs:
+  body:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: zrr1999/zendev/actions/validate-body@<ref>
+        with:
+          body: ${{ github.event.pull_request.body }}
+```
+
+By default, each wrapper runs the CLI from the same checked-out or pinned zendev
+revision as the action itself. That keeps the wrapper and Python logic in sync.
+
+Both actions also accept an optional `zendev-ref` input. Leave it unset for the
+same-revision default, or pass a git ref if you intentionally want the wrapper
+to install `zendev` from a different revision during a rollout.
 
 ### Use inside this repository
 
