@@ -30,7 +30,7 @@ runs:
         set -euo pipefail
 
         if [[ -n "${INPUT_ZENDEV_REF}" ]]; then
-          zendev_source="git+https://github.com/zrr1999/zendev.git@${INPUT_ZENDEV_REF}"
+          zendev_source="git+https://github.com/zendev-lab/zendev.git@${INPUT_ZENDEV_REF}"
         elif [[ -n "${INPUT_ACTION_REF}" && -n "${INPUT_ACTION_REPOSITORY}" ]]; then
           zendev_source="git+https://github.com/${INPUT_ACTION_REPOSITORY}.git@${INPUT_ACTION_REF}"
         else

@@ -22,7 +22,7 @@ With `.pre-commit-config.yaml`:
 
 ```yaml
 repos:
-  - repo: https://github.com/your-org/zendev
+  - repo: https://github.com/zendev-lab/zendev
     rev: v0.1.0
     hooks:
       - id: zendev-commit-msg
@@ -32,7 +32,7 @@ With `prek.toml`:
 
 ```toml
 [[repos]]
-repo = "https://github.com/your-org/zendev"
+repo = "https://github.com/zendev-lab/zendev"
 rev = "v0.1.0"
 hooks = [
   { id = "zendev-commit-msg" },
@@ -96,7 +96,7 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: zrr1999/zendev/actions/validate-title@<ref>
+      - uses: zendev-lab/zendev/actions/validate-title@<ref>
         with:
           text: ${{ github.event.pull_request.title }}
 ```
@@ -108,7 +108,7 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: zrr1999/zendev/actions/validate-body@<ref>
+      - uses: zendev-lab/zendev/actions/validate-body@<ref>
         with:
           body: ${{ github.event.pull_request.body }}
 ```
