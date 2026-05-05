@@ -83,6 +83,16 @@ jobs:
       - uses: ./actions/validate-body
         with:
           body: ${{ github.event.pull_request.body }}
+
+  checklist:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/validate-checklist
+        with:
+          body: ${{ github.event.pull_request.body }}
 ```
 
 #### Use from another repository
@@ -109,6 +119,23 @@ jobs:
       pull-requests: read
     steps:
       - uses: zendev-lab/zendev/actions/validate-body@v0.0.5
+        with:
+          body: ${{ github.event.pull_request.body }}
+```
+
+[`actions/validate-checklist`](./actions/validate-checklist) runs `zendev-validate-checklist`,
+which parses every `- [x] …` row under `## Checklist` in your PR template and requires those
+exact lines (character-for-character except trailing newline handling) to appear in the PR body:
+
+```yaml
+jobs:
+  checklist:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: zendev-lab/zendev/actions/validate-checklist@v0.0.5
         with:
           body: ${{ github.event.pull_request.body }}
 ```

@@ -15,6 +15,7 @@ zendev-commit = "zendev.commit:main"
 zendev-commit-msg = "zendev.commit:hook_main"
 zendev-validate-title = "zendev.title:main"
 zendev-validate-body = "zendev.body:main"
+zendev-validate-checklist = "zendev.checklist:main"
 
 [dependency-groups]
 dev = [

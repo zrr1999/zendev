@@ -5,12 +5,14 @@ on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   title:
     name: PR title
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     steps:
       - uses: actions/checkout@v4
       - name: Check PR title
@@ -21,8 +23,6 @@ jobs:
   body:
     name: PR body
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     steps:
       - uses: actions/checkout@v4
       - name: Check PR body
